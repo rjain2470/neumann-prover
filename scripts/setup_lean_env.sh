@@ -1,40 +1,44 @@
-
+#!/usr/bin/env bash
 set -euo pipefail
 
 if ! command -v elan >/dev/null 2>&1; then
-  echo "[neumann] Installing elan..."
   curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y
 fi
 
-source "$HOME/.elan/env"
+[[ -f "$HOME/.elan/env" ]] && source "$HOME/.elan/env"
 
-# Pin Lean toolchain
-LEAN_TOOLCHAIN="leanprover/lean4:v4.22.0"
-elan toolchain install "$LEAN_TOOLCHAIN" || true
-elan default "$LEAN_TOOLCHAIN"
+TOOLCHAIN="${LEAN_TOOLCHAIN:-leanprover/lean4:v4.22.0}"
+elan toolchain install "$TOOLCHAIN" || true
 
-# Create (or reuse) a Lean project directory
-LEAN_DIR="$HOME/lean_project"
-mkdir -p "$LEAN_DIR"
-cd "$LEAN_DIR"
+if [[ $# -ge 1 ]]; then
+  PROJECT_DIR="$1"
+else
+  if [[ -f "./pyproject.toml" || -d "./src/neumann_prover" || "$(basename "$(pwd)")" == "neumann-prover" ]]; then
+    PROJECT_DIR="./lean_project"
+  else
+    PROJECT_DIR="$HOME/lean_project"
+  fi
+fi
 
-echo "$LEAN_TOOLCHAIN" > lean-toolchain
+mkdir -p "$PROJECT_DIR"
+cd "$PROJECT_DIR"
+elan override set "$TOOLCHAIN"
+echo "$TOOLCHAIN" > lean-toolchain
 
-# 5) Minimal Lakefile pinned to Mathlib v4.22.0
-cat > lakefile.lean <<'EOF'
+ML_REF="${MATHLIB_REF:-v4.22.0}"
+cat > lakefile.lean <<EOF
 import Lake
 open Lake DSL
 
-package lean_project
+package «lean_project» where
 
 require «mathlib» from git
-  "https://github.com/leanprover-community/mathlib4" @ "v4.22.0"
+  "https://github.com/leanprover-community/mathlib4" @ "${ML_REF}"
 EOF
 
-echo "[neumann] Running lake update..."
 lake update
-
-echo "[neumann] Fetching Mathlib cache..."
 lake exe cache get || true
+lake build || true
 
-echo "✅ Lean + Mathlib set up at $LEAN_DIR"
+export NEUMANN_LEAN_PROJECT="$PROJECT_DIR"
+echo "NEUMANN_LEAN_PROJECT=$PROJECT_DIR"
