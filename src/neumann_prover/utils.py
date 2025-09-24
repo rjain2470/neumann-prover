@@ -24,7 +24,7 @@ from typing import Tuple
 
 def compile_lean_snippet(
     lean_code: str,
-    project_root: str = None,
+    project_root: str | None = None,
     filename: str = "Main.lean",
     *,
     echo: bool = False,
@@ -37,18 +37,21 @@ def compile_lean_snippet(
     - ok: True if compilation succeeded, False otherwise.
     - stdout/stderr: compiler outputs (possibly empty).
     """
-    # Choose a neutral default work dir
-    if project_root is None:
-        project_root = os.environ.get("NEUMANN_LEAN_PROJECT", "./lean_project")
+    # Resolve project root
+    if not project_root:
+        env_root = os.environ.get("NEUMANN_LEAN_PROJECT")
+        if env_root:
+            project_root = env_root
+        else:
+            project_root = str(pathlib.Path.cwd() / "lean_project")
 
-    root = pathlib.Path(project_root)
+    root = pathlib.Path(project_root).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     (root / filename).write_text(ensure_import_mathlib(lean_code), encoding="utf-8")
 
     cmd = [
         "bash", "-lc",
         f"cd {root} && "
-        # source elan if present; ignore if missing
         f"source \"$HOME/.elan/env\" >/dev/null 2>&1 || true && "
         f"lake -q env lean {filename}"
     ]
@@ -59,7 +62,6 @@ def compile_lean_snippet(
         ok = (proc.returncode == 0)
         return ok, (stdout or "").strip(), (stderr or "").strip()
     except FileNotFoundError as e:
-        # lake/lean not found on PATH
         return False, "", f"Lean toolchain not found: {e}"
     except Exception as e:
         return False, "", f"Lean invocation error: {e}"
