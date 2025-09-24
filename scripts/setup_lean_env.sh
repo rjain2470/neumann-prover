@@ -41,4 +41,4 @@ lake exe cache get || true
 lake build || true
 
 export NEUMANN_LEAN_PROJECT="$PROJECT_DIR"
-echo "NEUMANN_LEAN_PROJECT=$PROJECT_DIR"
+echo "Lean + Mathlib set up successfully at $PROJECT_DIR ✅"
