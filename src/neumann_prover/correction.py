@@ -133,7 +133,7 @@ def try_formal_proof_until_compiles(
     *,
     model: str | None = None,
     max_iters: int = 4,          # renamed for clarity; pass this from your pipeline
-    project_root: str = "/content/lean_project",
+    project_root: str | None = None,
     filename: str = "Main.lean",
 ) -> Dict[str, object]:
     """
@@ -141,6 +141,11 @@ def try_formal_proof_until_compiles(
     On each failure, feed compiler stderr back into the next prompt.
     Returns: {"success": bool, "final_code": str, "attempts": [ {...} , ...] }
     """
+
+    if not project_root:
+        import os, pathlib
+        project_root = os.environ.get("NEUMANN_LEAN_PROJECT", str(pathlib.Path.cwd() / "lean_project"))
+    
     attempts: List[Dict[str, str]] = []
     last_error: str | None = None
     final_code: str = ""
