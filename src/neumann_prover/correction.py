@@ -104,7 +104,7 @@ def formal_statement_until_compiles(
         # Normalize and compile
         code = ensure_import_mathlib(code)
         ok, out, err = compile_lean_snippet(
-            code, project_root=project_root, filename=filename, echo=False
+            code
         )
         last_code = code
 
