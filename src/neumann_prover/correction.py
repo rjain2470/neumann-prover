@@ -158,7 +158,7 @@ def try_formal_proof_until_compiles(
 
         # Compile
         ok, out, err = compile_lean_snippet(
-            code, project_root=project_root, filename=filename, echo=False
+            code
         )
 
         # Log this round
