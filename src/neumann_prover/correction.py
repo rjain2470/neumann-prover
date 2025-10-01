@@ -70,13 +70,18 @@ def formal_statement_until_compiles(
     statement: str,
     model: str | None = None,
     max_iters: int = 3,
-    project_root: str = "/content/lean_project",
+    project_root: str = None,
     filename: str = "Main.lean",
 ) -> str:
     """
     Try up to max_iters times. On the first compilation success, return immediately.
     If none succeed, return the last attempted code.
     """
+
+    if not project_root:
+        import os, pathlib
+        project_root = os.environ.get("NEUMANN_LEAN_PROJECT", str(pathlib.Path.cwd() / "lean_project"))
+    
     last_code: str = ""
     last_error: str | None = None
 
