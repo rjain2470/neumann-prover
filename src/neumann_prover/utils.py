@@ -67,7 +67,6 @@ def compile_lean_snippet(
         return False, "", f"Lean invocation error: {e}"
 
 def extract_lean_code(text: str) -> str:
-    # (unchanged)
     m = re.search(r"```lean4\s*(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
     if not m:
         m = re.search(r"```lean\s*(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
