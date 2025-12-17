@@ -2,7 +2,7 @@
 '''
 src/neumann_prover/stages.py
 
-This module defines the mapping from pipeline stages to default model identifiers and provides small helpers to query it. It is import-free and side-effect-free.
+This module defines the mapping from pipeline stages to default model identifiers and provides small helpers to query it.
 
 Data:
 
