@@ -88,11 +88,9 @@ def formal_statement_until_compiles(
         print(f"\n=== Attempt {i}/{max_iters} (Formal Statement) ===")
 
         if i == 1:
-            # 1) Generate initial draft (generator may return a report; extract Lean).
             raw = formal_statement_generator(statement, model=model, project_root=project_root)
             code = extract_lean_code(raw) or str(raw)
         else:
-            # 2) Correct using previous code + diagnostics bundled together.
             if not last_code or last_error is None:
                 print("Correction requires previous code and error. Stopping.")
                 break
@@ -105,7 +103,6 @@ def formal_statement_until_compiles(
               )
             code = extract_lean_code(corrected) or str(corrected)
 
-        # Normalize and compile
         code = ensure_import_mathlib(code)
         ok, out, err = compile_lean_snippet(
             code
@@ -131,7 +128,7 @@ def try_formal_proof_until_compiles(
     formal_statement: str | None = None,
     *,
     model: str | None = None,
-    max_iters: int = 4,          # renamed for clarity; pass this from your pipeline
+    max_iters: int = 4,          
     project_root: str | None = None,
     filename: str = "Main.lean",
 ) -> Dict[str, object]:
@@ -152,8 +149,6 @@ def try_formal_proof_until_compiles(
 
     for i in range(1, max_iters + 1):
         print(f"\n=== Attempt {i}/{max_iters} (Formal Proof) ===")
-
-        # Generate candidate Lean code (the generator auto-fills missing artifacts)
         gen = formal_proof_generator(
             informal_statement=informal_statement,
             informal_proof=informal_proof,
