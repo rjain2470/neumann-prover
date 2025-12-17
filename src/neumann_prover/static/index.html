@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neumann Prover - Mathematical Autoformalization</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/lean.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>✈️ Neumann Prover</h1>
+            <p class="subtitle">End-to-end Mathematical Autoformalization with Lean</p>
+        </header>
+
+        <!-- API Key Management -->
+        <section class="card">
+            <h2>🔑 API Key Configuration</h2>
+            <p class="help-text">Keys are stored locally in your browser and never sent to our servers.</p>
+            
+            <div class="key-grid">
+                <div class="key-input-group">
+                    <label for="openai-key">
+                        <span class="provider-icon">🤖</span> OpenAI API Key
+                        <a href="https://platform.openai.com/api-keys" target="_blank" class="get-key-link">Get Key</a>
+                    </label>
+                    <div class="input-with-status">
+                        <input type="password" id="openai-key" placeholder="sk-..." />
+                        <span class="status-indicator" id="openai-status">●</span>
+                    </div>
+                </div>
+
+                <div class="key-input-group">
+                    <label for="anthropic-key">
+                        <span class="provider-icon">🧠</span> Anthropic API Key
+                        <a href="https://console.anthropic.com/settings/keys" target="_blank" class="get-key-link">Get Key</a>
+                    </label>
+                    <div class="input-with-status">
+                        <input type="password" id="anthropic-key" placeholder="sk-ant-..." />
+                        <span class="status-indicator" id="anthropic-status">●</span>
+                    </div>
+                </div>
+
+                <div class="key-input-group">
+                    <label for="together-key">
+                        <span class="provider-icon">🤝</span> Together AI API Key
+                        <a href="https://api.together.xyz/settings/api-keys" target="_blank" class="get-key-link">Get Key</a>
+                    </label>
+                    <div class="input-with-status">
+                        <input type="password" id="together-key" placeholder="..." />
+                        <span class="status-indicator" id="together-status">●</span>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="saveApiKeys()" class="btn btn-primary">Save Keys</button>
+        </section>
+
+        <!-- Input Configuration -->
+        <section class="card">
+            <h2>📝 Input Configuration</h2>
+            
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="input-informal-statement" checked disabled />
+                    <span>Informal Statement (Required)</span>
+                </label>
+            </div>
+            
+            <div class="input-section">
+                <label for="informal-statement">Informal Mathematical Statement</label>
+                <textarea id="informal-statement" rows="4" 
+                    placeholder="Example: For every even integer n, 4 divides n²." required></textarea>
+            </div>
+
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="input-informal-proof" onchange="toggleInput('informal-proof-section')" />
+                    <span>Informal Proof (Optional)</span>
+                </label>
+                
+                <label class="checkbox-label">
+                    <input type="checkbox" id="input-formal-statement" onchange="toggleInput('formal-statement-section')" />
+                    <span>Formal Statement (Optional)</span>
+                </label>
+                
+                <label class="checkbox-label">
+                    <input type="checkbox" id="input-pseudocode" onchange="toggleInput('pseudocode-section')" />
+                    <span>Lean Pseudocode (Optional)</span>
+                </label>
+                
+                <label class="checkbox-label">
+                    <input type="checkbox" id="input-prev-errors" onchange="toggleInput('prev-errors-section')" />
+                    <span>Previous Compiler Errors (Correction Mode)</span>
+                </label>
+            </div>
+
+            <div id="informal-proof-section" class="input-section hidden">
+                <label for="informal-proof">Informal Proof</label>
+                <textarea id="informal-proof" rows="4" 
+                    placeholder="If n is even, then n=2k for some integer k. Then n²=(2k)²=4k², so 4 divides n²."></textarea>
+            </div>
+
+            <div id="formal-statement-section" class="input-section hidden">
+                <label for="formal-statement">Formal Statement in Lean</label>
+                <textarea id="formal-statement" rows="6" class="code-input" 
+                    placeholder="import Mathlib&#10;&#10;theorem example_theorem : ∀ n : ℤ, Even n → 4 ∣ n^2 := by&#10;  sorry"></textarea>
+            </div>
+
+            <div id="pseudocode-section" class="input-section hidden">
+                <label for="pseudocode">Lean Pseudocode</label>
+                <textarea id="pseudocode" rows="6" class="code-input" 
+                    placeholder="intro n h&#10;rcases h with ⟨k, hk⟩&#10;refine ⟨k^2, ?_⟩&#10;..."></textarea>
+            </div>
+
+            <div id="prev-errors-section" class="input-section hidden">
+                <label for="prev-errors">Previous Compiler Errors</label>
+                <textarea id="prev-errors" rows="4" class="code-input" 
+                    placeholder="Main.lean:5:8: error: ..."></textarea>
+            </div>
+        </section>
+
+        <!-- Output Configuration -->
+        <section class="card">
+            <h2>📤 Output Configuration</h2>
+            <p class="help-text">Select which artifacts you want to generate:</p>
+            
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="output-informal-proof" checked />
+                    <span>Generate Informal Proof</span>
+                </label>
+                
+                <label class="checkbox-label">
+                    <input type="checkbox" id="output-formal-statement" checked />
+                    <span>Generate Formal Statement</span>
+                </label>
+                
+                <label class="checkbox-label">
+                    <input type="checkbox" id="output-formal-proof" checked />
+                    <span>Generate Formal Proof</span>
+                </label>
+                
+                <label class="checkbox-label">
+                    <input type="checkbox" id="output-pseudocode" checked />
+                    <span>Generate Lean Pseudocode</span>
+                </label>
+            </div>
+        </section>
+
+        <!-- Model Selection -->
+        <section class="card">
+            <h2>🤖 Model Selection</h2>
+            <p class="help-text">Choose models for each pipeline stage (leave default for automatic selection):</p>
+            
+            <div class="model-grid" id="model-selection">
+                <div class="model-input-group">
+                    <label for="model-informal">Informal Proof Generation</label>
+                    <select id="model-informal">
+                        <option value="">Default (from stages.py)</option>
+                    </select>
+                    <span class="model-default" id="default-informal"></span>
+                </div>
+
+                <div class="model-input-group">
+                    <label for="model-statement">Formal Statement Generation</label>
+                    <select id="model-statement">
+                        <option value="">Default (from stages.py)</option>
+                    </select>
+                    <span class="model-default" id="default-statement"></span>
+                </div>
+
+                <div class="model-input-group">
+                    <label for="model-proof">Formal Proof Generation</label>
+                    <select id="model-proof">
+                        <option value="">Default (from stages.py)</option>
+                    </select>
+                    <span class="model-default" id="default-proof"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced Settings -->
+        <section class="card">
+            <details>
+                <summary><h2 style="display: inline;">⚙️ Advanced Settings</h2></summary>
+                
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label for="temperature">Temperature: <span id="temp-value">0.7</span></label>
+                        <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" 
+                            oninput="document.getElementById('temp-value').textContent = this.value" />
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="max-statement-iters">Max Statement Correction Iterations</label>
+                        <input type="number" id="max-statement-iters" min="1" max="10" value="3" />
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="max-proof-iters">Max Proof Correction Iterations</label>
+                        <input type="number" id="max-proof-iters" min="1" max="10" value="4" />
+                    </div>
+
+                    <div class="setting-group">
+                        <label for="project-root">Custom Lean Project Path</label>
+                        <input type="text" id="project-root" placeholder="/path/to/lean_project" />
+                    </div>
+                </div>
+            </details>
+        </section>
+
+        <!-- Generate Button -->
+        <div class="action-section">
+            <button onclick="generateProof()" class="btn btn-primary btn-large" id="generate-btn">
+                🚀 Generate Proof
+            </button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div id="progress-section" class="card hidden">
+            <h3>⏳ Pipeline Progress</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <p id="progress-text" class="progress-text">Initializing...</p>
+        </div>
+
+        <!-- Results Dashboard -->
+        <section id="results-section" class="card hidden">
+            <h2>📊 Results</h2>
+            
+            <div id="results-container"></div>
+            
+            <div class="action-buttons">
+                <button onclick="exportResults()" class="btn btn-secondary">💾 Export Results</button>
+                <button onclick="resetForm()" class="btn btn-secondary">🔄 New Problem</button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Powered by OpenAI, Anthropic, and Together AI • Built with Lean 4</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

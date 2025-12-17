@@ -12,6 +12,9 @@ compiler to iterate until it produces a correct result.
 - **Formal Statement Verification**: Translate informal mathematical theorem statement into Lean4 code.
 - **Integration with Lean Theorem Prover**: Ensures compatibility with Lean and Mathlib.
 - **Multi-Model Support**: Seamlessly utilize OpenAI, Anthropic, and Together APIs for diverse functionality.
+- **Modern Web Interface**: User-friendly web UI for interactive autoformalization without programming knowledge.
+- **Real-time Progress Tracking**: Watch your proofs being generated with live updates.
+- **Flexible Pipeline**: Choose which artifacts to generate and which models to use for each stage.
 
 ## Repository Structure 📂
 
@@ -31,6 +34,80 @@ compiler to iterate until it produces a correct result.
 ```
 
 ## Installation 🔧
+
+### Web Interface (Recommended for Most Users)
+
+The web interface provides an intuitive, browser-based way to use Neumann Prover without any programming knowledge.
+
+#### Quick Start with Docker
+
+The easiest way to run the web interface is using Docker:
+
+```bash
+# Clone the repository
+git clone https://github.com/rjain2470/neumann-prover.git
+cd neumann-prover
+
+# Set up your API keys (optional - can also set in web UI)
+export OPENAI_API_KEY="your-key-here"
+export ANTHROPIC_API_KEY="your-key-here"
+export TOGETHER_API_KEY="your-key-here"
+
+# Run with Docker Compose
+docker-compose up
+```
+
+Then open your browser to `http://localhost:8000`
+
+#### Manual Setup
+
+If you prefer to run without Docker:
+
+1. **Install Python 3.11+**:
+   ```bash
+   conda create -y -n neumann-prover python=3.11
+   conda activate neumann-prover
+   ```
+
+2. **Clone and Install**:
+   ```bash
+   git clone https://github.com/rjain2470/neumann-prover.git
+   cd neumann-prover
+   pip install -e .
+   ```
+
+3. **Set up Lean Environment**:
+   ```bash
+   bash scripts/setup_lean_env.sh
+   ```
+
+4. **Run the Web Server**:
+   ```bash
+   python -m uvicorn neumann_prover.web_app:app --host 0.0.0.0 --port 8000
+   ```
+
+5. **Access the Interface**:
+   Open your browser to `http://localhost:8000`
+
+#### Using the Web Interface
+
+1. **Configure API Keys**: Enter your OpenAI, Anthropic, and/or Together AI API keys. These are stored securely in your browser's local storage.
+
+2. **Enter Your Problem**: Type or paste your informal mathematical statement.
+
+3. **Choose Options**: 
+   - Select which outputs you want (informal proof, formal statement, formal proof, pseudocode)
+   - Optionally provide additional inputs (informal proof, formal statement, etc.)
+   - Choose specific models or use defaults
+
+4. **Generate**: Click the "Generate Proof" button and watch the progress in real-time.
+
+5. **Review Results**: View generated artifacts with syntax highlighting, compilation status, and any error messages.
+
+6. **Export**: Download results as JSON for later use.
+
+---
+
 ### Install Using Jupyter Notebook
 
 Follow these step-by-step instructions to set up `neumann-prover` for use in Jupyter Notebook:
@@ -159,6 +236,11 @@ export TOGETHER_API_KEY="your-together-key"
 ```
 
 ### Example Usage
+
+#### Web Interface
+Visit `http://localhost:8000` in your browser for the interactive web interface.
+
+#### Python API
 Here is an example of how one might use this repo to generate the formal statement from an informal statement.
 ```python
 informal_text = "For every even integer n, 4 divides n^2."
@@ -235,6 +317,142 @@ Formal Statement:
 Formal Proof:
  {'text': 'import Mathlib\n\nnamespace Demo\n\ndef EvenInt (n : ℤ) : Prop := ∃ k : ℤ, n = 2 * k\n\ntheorem even_square_divisible_by_four :\n    ∀ n : ℤ, EvenInt n → (4 : ℤ) ∣ n ^ 2 := by\n  intro n h\n  rcases h with ⟨k, hk⟩\n  refine ⟨k ^ 2, ?_⟩\n  have hcalc : (2 * k) * (2 * k) = (4 : ℤ) * (k * k) := by\n    ring\n  simpa [hk, pow_two] using hcalc\n\nend Demo\n', 'compiled': True, 'stdout': '', 'stderr': ''}
 ```
+---
+
+## Web API Documentation 🌐
+
+The web interface is powered by a FastAPI backend that can also be used programmatically.
+
+### API Endpoints
+
+#### GET `/api/stages`
+Get all available pipeline stages and their default models (dynamically loaded from `stages.py`).
+
+**Response:**
+```json
+{
+  "stages": {
+    "informal_proof": "gpt-5-mini",
+    "formal_statement_draft": "gpt-5-mini",
+    "formal_proof_draft": "gpt-5",
+    ...
+  },
+  "stage_list": ["informal_proof", "formal_statement_draft", ...]
+}
+```
+
+#### GET `/api/models`
+Get all available models organized by provider.
+
+**Response:**
+```json
+{
+  "models": {
+    "openai": ["gpt-5", "gpt-5-mini", "gpt-5-nano"],
+    "anthropic": ["claude-opus-4-1-20250805", "claude-sonnet-4-20250514"],
+    "together": ["meta-llama/Llama-3-70b-chat-hf", ...]
+  },
+  "all_models": ["gpt-5", "gpt-5-mini", ...]
+}
+```
+
+#### POST `/api/generate`
+Main generation pipeline endpoint. Processes mathematical statements and generates proofs.
+
+**Request Body:**
+```json
+{
+  "informal_statement": "For every even integer n, 4 divides n^2.",
+  "informal_proof": null,
+  "formal_statement": null,
+  "lean_pseudocode": null,
+  "previous_errors": null,
+  "generate_informal_proof": true,
+  "generate_formal_statement": true,
+  "generate_formal_proof": true,
+  "generate_pseudocode": true,
+  "model_informal": null,
+  "model_statement": null,
+  "model_proof": null,
+  "temperature": 0.7,
+  "max_statement_iters": 3,
+  "max_proof_iters": 4,
+  "project_root": null
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "informal_proof": {"text": "..."},
+  "pseudocode": {"text": "..."},
+  "formal_statement": {
+    "text": "import Mathlib\n...",
+    "compiled": true,
+    "stdout": "",
+    "stderr": ""
+  },
+  "formal_proof": {
+    "text": "import Mathlib\n...",
+    "compiled": true,
+    "stdout": "",
+    "stderr": ""
+  },
+  "summary": {
+    "n_items": 1,
+    "statements_compiled": 1,
+    "proofs_compiled": 1,
+    "elapsed_sec": 45.2
+  }
+}
+```
+
+#### POST `/api/compile`
+Standalone Lean compilation check.
+
+**Request Body:**
+```json
+{
+  "lean_code": "import Mathlib\n\ntheorem test : True := trivial",
+  "project_root": null,
+  "filename": "Main.lean"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "stdout": "",
+  "stderr": "",
+  "code": "import Mathlib\n..."
+}
+```
+
+#### GET `/api/health`
+System health and dependency check.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "lean_available": true,
+  "environment_vars": {
+    "OPENAI_API_KEY": true,
+    "ANTHROPIC_API_KEY": false,
+    "TOGETHER_API_KEY": true
+  }
+}
+```
+
+#### WebSocket `/ws/progress`
+Real-time progress updates during generation (for future enhancements).
+
+### Interactive API Documentation
+
+When the server is running, visit `http://localhost:8000/docs` for interactive API documentation with Swagger UI.
+
 ---
 
 ## License 📄

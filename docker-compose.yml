@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  neumann-prover:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - TOGETHER_API_KEY=${TOGETHER_API_KEY:-}
+      - NEUMANN_LEAN_PROJECT=/app/lean_project
+    volumes:
+      - lean_project_cache:/app/lean_project
+      - ./src:/app/src
+    restart: unless-stopped
+
+volumes:
+  lean_project_cache:

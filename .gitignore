@@ -20,3 +20,9 @@ sample_data/
 
 .DS_Store
 Thumbs.db
+
+# Web interface artifacts
+node_modules/
+*.log
+.env
+.venv/
