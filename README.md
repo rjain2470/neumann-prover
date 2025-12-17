@@ -39,9 +39,29 @@ compiler to iterate until it produces a correct result.
 
 The web interface provides an intuitive, browser-based way to use Neumann Prover without any programming knowledge.
 
-#### Quick Start with Docker
+#### Option 1: Vercel Deployment (Public URL)
 
-The easiest way to run the web interface is using Docker:
+Deploy to Vercel for a public URL that anyone can access:
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Clone and deploy
+git clone https://github.com/rjain2470/neumann-prover.git
+cd neumann-prover
+vercel
+
+# Or connect via GitHub at https://vercel.com/new
+```
+
+See **[VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md)** for detailed deployment instructions.
+
+After deployment, your app will be available at: **https://neumannprover.vercel.app**
+
+#### Option 2: Quick Start with Docker (Local)
+
+The easiest way to run the web interface locally is using Docker:
 
 ```bash
 # Clone the repository
@@ -59,7 +79,7 @@ docker-compose up
 
 Then open your browser to `http://localhost:8000`
 
-#### Manual Setup
+#### Option 3: Manual Setup (Local)
 
 If you prefer to run without Docker:
 

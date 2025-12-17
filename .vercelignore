@@ -1,0 +1,55 @@
+# Vercel ignore file - exclude these from deployment
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+
+# Lean project files (too large for serverless)
+lean_project/
+lake-packages/
+lake-manifest.json
+
+# Development files
+.ipynb_checkpoints/
+*.ipynb
+.pytest_cache/
+.coverage
+
+# Documentation (optional, but saves space)
+*.md
+!VERCEL_DEPLOYMENT.md
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Test files
+test_*.py
+*_test.py
+tests/
+
+# Scripts not needed for web deployment
+scripts/
+neumann-prover
+
+# Docker files not needed on Vercel
+Dockerfile
+docker-compose.yml
+.dockerignore
