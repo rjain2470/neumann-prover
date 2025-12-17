@@ -134,31 +134,6 @@ If you want to use `neumann-prover` in a standard Python environment outside of 
 
 You’re all set! Refer to the usage examples in this README for how to run the tool.
 
-
-### Example Usage
-Here is an example of how one might use this repo to generate the formal statement from an informal statement.
-```python
-informal_text = "For every even integer n, 4 divides n^2."
-print(formal_statement_until_compiles(informal_text, model="gpt-5-mini", max_iters=2))
-```
-
-```
-=== Attempt 1/2 (Formal Statement) ===
-File successfully compiled!
-import Mathlib
-
-namespace Demo
-
-def even (n : Int) : Prop := ∃ k : Int, n = 2 * k
-
-def divides (a b : Int) : Prop := ∃ k : Int, b = a * k
-
-theorem four_dvd_square_of_even : ∀ n : Int, even n → divides 4 (n * n) := by
-  sorry
-
-end Demo
-```
-
 ## 📜 Configuration
 
 ### Dependencies
@@ -183,6 +158,83 @@ export ANTHROPIC_API_KEY="your-anthropic-key"
 export TOGETHER_API_KEY="your-together-key"
 ```
 
+### Example Usage
+Here is an example of how one might use this repo to generate the formal statement from an informal statement.
+```python
+informal_text = "For every even integer n, 4 divides n^2."
+print(formal_statement_until_compiles(informal_text, model="gpt-5-mini", max_iters=2))
+```
+
+```
+=== Attempt 1/2 (Formal Statement) ===
+File successfully compiled!
+import Mathlib
+
+namespace Demo
+
+def even (n : Int) : Prop := ∃ k : Int, n = 2 * k
+
+def divides (a b : Int) : Prop := ∃ k : Int, b = a * k
+
+theorem four_dvd_square_of_even : ∀ n : Int, even n → divides 4 (n * n) := by
+  sorry
+
+end Demo
+```
+One can also use neumann-prover to formalize batches of statements/proofs. Here is an example with a batch of size 1.
+```python
+import json
+examples = [
+    {
+        "id": "ex1",
+        "informal_text": "For every even integer n, 4 divides n^2.",
+        "informal_proof": "If n is even, n=2k, then n^2=(2k)^2=4k^2, so divisible by 4."
+    }
+]
+
+with open("examples.jsonl", "w") as f:
+    for ex in examples:
+        f.write(json.dumps(ex) + "\n")
+
+!neumann-prover --inputs examples.jsonl --outdir ./out --interactive false
+
+with open("./out/records.jsonl") as f:
+    records = [json.loads(line) for line in f]
+
+with open("./out/summary.json") as f:
+    summary = json.load(f)
+
+print("Number of records:", len(records))
+print("First record keys:", records[0].keys())
+print("\nSummary:", summary)
+first = records[0]
+
+print("\nFormal Statement:\n", first.get("formal_statement", ""))
+print("\nFormal Proof:\n", first.get("formal_proof", ""))
+```
+
+```
+✅ Wrote examples.jsonl
+Will generate missing informal proofs with gpt-5-mini.
+Will generate missing pseudocode with gpt-5-mini.
+Will generate/correct missing formal statements with gpt-5-mini.
+Will generate/correct missing formal proofs with gpt-5.
+[run_pipeline] Done.
+  Items: 1
+  Formal statements compiled: 1
+  Formal proofs compiled:     1
+
+Number of records: 1
+First record keys: dict_keys(['input', 'informal_proof', 'pseudocode', 'formal_statement', 'formal_proof'])
+
+Summary: {'n_items': 1, 'statements_compiled': 1, 'proofs_compiled': 1, 'elapsed_sec': 175.06}
+
+Formal Statement:
+ {'text': 'import Mathlib\n\nnamespace Demo\n\ndef EvenInt (n : Int) : Prop := ∃ k : Int, n = 2 * k\n\ntheorem even_int_square_div_by_four : ∀ n : Int, EvenInt n → (4 : Int) ∣ n^2 := by\n  sorry\n\nend Demo\n', 'compiled': True, 'stdout': "Main.lean:7:8: warning: declaration uses 'sorry'", 'stderr': ''}
+
+Formal Proof:
+ {'text': 'import Mathlib\n\nnamespace Demo\n\ndef EvenInt (n : ℤ) : Prop := ∃ k : ℤ, n = 2 * k\n\ntheorem even_square_divisible_by_four :\n    ∀ n : ℤ, EvenInt n → (4 : ℤ) ∣ n ^ 2 := by\n  intro n h\n  rcases h with ⟨k, hk⟩\n  refine ⟨k ^ 2, ?_⟩\n  have hcalc : (2 * k) * (2 * k) = (4 : ℤ) * (k * k) := by\n    ring\n  simpa [hk, pow_two] using hcalc\n\nend Demo\n', 'compiled': True, 'stdout': '', 'stderr': ''}
+```
 ---
 
 ## License 📄
