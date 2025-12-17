@@ -164,7 +164,7 @@ Here is an example of how one might use this repo to generate the formal stateme
 informal_text = "For every even integer n, 4 divides n^2."
 print(formal_statement_until_compiles(informal_text, model="gpt-5-mini", max_iters=2))
 ```
-
+Output:
 ```
 === Attempt 1/2 (Formal Statement) ===
 File successfully compiled!
@@ -212,7 +212,7 @@ first = records[0]
 print("\nFormal Statement:\n", first.get("formal_statement", ""))
 print("\nFormal Proof:\n", first.get("formal_proof", ""))
 ```
-
+Output:
 ```
 ✅ Wrote examples.jsonl
 Will generate missing informal proofs with gpt-5-mini.
