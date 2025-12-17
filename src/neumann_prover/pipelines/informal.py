@@ -2,7 +2,7 @@
 '''
 src/neumann_prover/pipelines/informal.py
 
-This module contains single-shot generators for informal reasoning artifacts. They select a provider based on the model identifier and return plain text results.
+This module contains single-shot generators for informal reasoning artifacts. It selects a provider based on the model identifier and return plain text results.
 
 Functions:
 
