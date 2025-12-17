@@ -2,7 +2,7 @@
 src/neumann_prover/providers.py
 
 Provider adapters and provider inference. Each adapter calls its vendor SDK
-and returns plain text. No notebook-only dependencies at import time.
+and returns plain text. 
 
 Functions:
 
@@ -30,7 +30,7 @@ def _get_secret(name: str) -> Optional[str]:
     if val:
         return val
     try:
-        import google.colab.userdata as _ud  # optional; safe elsewhere
+        import google.colab.userdata as _ud  # optional
         return _ud.get(name)
     except Exception:
         return None
