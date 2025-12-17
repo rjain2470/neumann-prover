@@ -1,4 +1,4 @@
-# Neumann Prover ✈️
+# Neumann Prover 🎨
 
 **Neumann-Prover** is an end-to-end, multi-purpose autoformalization tool designed to produce formal proofs in Lean. It uses cutting-edge foundation models from OpenAI, and Anthropic,
 as well over twenty open-source models available via Together, including offerings from DeepSeek, Qwen, and Meta. It offers extraordinary flexibility: not only can users choose which
