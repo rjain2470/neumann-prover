@@ -31,10 +31,70 @@ compiler to iterate until it produces a correct result.
 ```
 
 ## Installation 🔧
-### X
+### Install Using Jupyter Notebook
 
-### Import onto Local Library
-You can import `neumann-prover` into your local Python environment by running the following code.
+Follow these step-by-step instructions to set up `neumann-prover` for use in Jupyter Notebook:
+
+#### Step 1: Set up Python Environment
+First, create and activate a Python 3.11 environment using `conda`:
+```bash
+conda create -y -n neumann-prover python=3.11
+conda activate neumann-prover
+```
+
+#### Step 2: Install JupyterLab and Kernel
+Install JupyterLab and the required kernel dependencies:
+```bash
+pip install jupyterlab ipykernel
+```
+
+#### Step 3: Clone the Repository and Install
+Clone the `neumann-prover` repository and install it in editable mode:
+```bash
+git clone git@github.com:rjain2470/neumann-prover.git
+cd neumann-prover
+pip install -e .
+```
+
+**Note**: Use your personal access token (PAT) as the password if prompted during the `git clone` step.
+
+#### Step 4: Add Jupyter Kernel
+Add the `neumann-prover` kernel to Jupyter:
+```bash
+python -m ipykernel install --user --name neumann-prover --display-name "neumann-prover (py311)"
+```
+
+#### Step 5: Configure API Keys
+Set the required API keys in your shell environment. To do this:
+
+1. Open your shell configuration file (e.g., `.zshrc` or `.bashrc`) in a text editor:
+    ```bash
+    nano ~/.zshrc
+    ```
+2. Add the following lines to the file, replacing `___` with your actual API keys:
+    ```bash
+    export OPENAI_API_KEY="___"
+    export ANTHROPIC_API_KEY="___"
+    export TOGETHER_API_KEY="___"
+    ```
+3. Save the changes (`Ctrl+O`), and exit the editor (`Ctrl+X`).
+4. Reload your shell configuration to apply the changes:
+    ```bash
+    source ~/.zshrc
+    ```
+
+#### Step 6: Start Jupyter Lab
+Activate the environment and start Jupyter Lab:
+```bash
+conda activate neumann-prover
+jupyter lab
+```
+
+Inside Jupyter, select the kernel titled `neumann-prover (py311)`.
+
+#### Step 7: Set Up the Project Environment
+Once inside a Jupyter Notebook, finalize the setup by running the following commands:
+
 ```python
 %pip install -e /Users/jain/neumann-prover > /dev/null 2>&1
 
@@ -48,6 +108,33 @@ from neumann_prover.providers import _provider_for
 from neumann_prover.pipelines import informal_proof_generator, lean_pseudocode_generator, formal_statement_generator, formal_proof_generator, run_pipeline, batch
 from neumann_prover.correction import formal_statement_corrector, formal_statement_until_compiles, try_formal_proof_until_compiles
 ```
+
+Replace `/path/to/neumann-prover` with the actual path where you cloned the repository.
+
+That's it! You are now ready to use `neumann-prover` for its full range of features. 🎉
+
+---
+
+### 2. Regular Python Installation (Optional)
+If you want to use `neumann-prover` in a standard Python environment outside of Jupyter:
+
+1. Clone the repository:
+    ```bash
+    git clone git@github.com:rjain2470/neumann-prover.git
+    cd neumann-prover
+    ```
+2. Install the requirements:
+    ```bash
+    pip install -e .
+    ```
+3. Set up the Lean environment:
+    ```bash
+    bash scripts/setup_lean_env.sh
+    ```
+
+You’re all set! Refer to the usage examples in this README for how to run the tool.
+
+
 ### Example Usage
 Here is an example of how one might use this repo to generate the formal statement from an informal statement.
 ```python
@@ -105,7 +192,3 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Acknowledgments ❤️
 Thanks to OpenAI, Anthropic, and Together for access their foundational models which made this project possible.
-
-
-
-
