@@ -243,4 +243,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 ## Acknowledgments ❤️
-Thanks to OpenAI, Anthropic, and Together for access their foundational models which made this project possible.
+Thanks to OpenAI, Anthropic, and Together for access to the foundation models which made this project possible.
