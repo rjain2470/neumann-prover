@@ -9,7 +9,7 @@ compiler to iterate until it produces a correct result.
 ## Pipeline overview 🚀
 The following diagram summarizes neumann-prover's workflow.
 
-![](assets/flowchart.png)
+![Diagram of neumann-prover's workflow.](assets/flowchart.png)
 
 
 ### Features 
