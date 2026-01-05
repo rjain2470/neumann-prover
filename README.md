@@ -7,6 +7,10 @@ whether they want (i) an informal proof, (ii) a formal statement, (iii) Lean pse
 compiler to iterate until it produces a correct result.
 
 ## Pipeline overview 🚀
+The following diagram summarizes neumann-prover's workflow.
+## Pipeline Overview 🧠
+
+![](assets/flowchart.png)
 
 
 ### Features 
