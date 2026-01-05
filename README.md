@@ -6,7 +6,10 @@ model to use, they have the option to input an informal statement and/or a forma
 whether they want (i) an informal proof, (ii) a formal statement, (iii) Lean pseudocode of a formal proof, or (iv) a formal proof. The model then interacts dynamically with the Lean4 
 compiler to iterate until it produces a correct result.
 
-## Features 🚀
+## Pipeline overview 🚀
+
+
+### Features 
 
 - **Text-to-Proof Automation**: Generate informal proofs, formal statements, and Lean-4 pseudocode from natural language inputs.
 - **Formal Statement Verification**: Translate informal mathematical theorem statement into Lean4 code.
