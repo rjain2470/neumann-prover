@@ -8,7 +8,6 @@ compiler to iterate until it produces a correct result.
 
 ## Pipeline overview 🚀
 The following diagram summarizes neumann-prover's workflow.
-## Pipeline Overview 🧠
 
 ![](assets/flowchart.png)
 
