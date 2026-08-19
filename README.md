@@ -16,8 +16,9 @@ The following diagram summarizes neumann-prover's workflow.
 
 - **Text-to-Proof Automation**: Generate informal proofs, formal statements, and Lean-4 pseudocode from natural language inputs.
 - **Formal Statement Verification**: Translate informal mathematical theorem statement into Lean4 code.
+- **Sound proof verification**: A proof counts as solved only if it compiles *and* passes a soundness check — no `sorry`, `admit`, or `native_decide`, and only whitelisted axioms (`propext`, `Classical.choice`, `Quot.sound`). This blocks the common reward-hacking failure where a "proof" exits the compiler cleanly but is vacuous.
 - **Integration with Lean Theorem Prover**: Ensures compatibility with Lean and Mathlib.
-- **Multi-Model Support**: Seamlessly utilize OpenAI, Anthropic, and Together APIs for diverse functionality.
+- **Multi-Model Support**: Seamlessly utilize OpenAI, Anthropic, and Together APIs. Defaults are current-best (OpenAI gpt-5 family; Claude Opus 4.8 / Sonnet 4.6). `temperature` is only sent to models that accept it.
 
 ## Repository Structure 📂
 
@@ -202,7 +203,7 @@ with open("examples.jsonl", "w") as f:
     for ex in examples:
         f.write(json.dumps(ex) + "\n")
 
-!neumann-prover --inputs examples.jsonl --outdir ./out --interactive false
+!neumann-prover --inputs examples.jsonl --outdir ./out
 
 with open("./out/records.jsonl") as f:
     records = [json.loads(line) for line in f]
@@ -227,13 +228,12 @@ Will generate/correct missing formal statements with gpt-5-mini.
 Will generate/correct missing formal proofs with gpt-5.
 [run_pipeline] Done.
   Items: 1
-  Formal statements compiled: 1
-  Formal proofs compiled:     1
+[run_pipeline] Done. items=1 statements_verified=1 proofs_verified=1
 
 Number of records: 1
 First record keys: dict_keys(['input', 'informal_proof', 'pseudocode', 'formal_statement', 'formal_proof'])
 
-Summary: {'n_items': 1, 'statements_compiled': 1, 'proofs_compiled': 1, 'elapsed_sec': 175.06}
+Summary: {'n_items': 1, 'statements_verified': 1, 'proofs_verified': 1, 'elapsed_sec': 175.06}
 
 Formal Statement:
  {'text': 'import Mathlib\n\nnamespace Demo\n\ndef EvenInt (n : Int) : Prop := ∃ k : Int, n = 2 * k\n\ntheorem even_int_square_div_by_four : ∀ n : Int, EvenInt n → (4 : Int) ∣ n^2 := by\n  sorry\n\nend Demo\n', 'compiled': True, 'stdout': "Main.lean:7:8: warning: declaration uses 'sorry'", 'stderr': ''}

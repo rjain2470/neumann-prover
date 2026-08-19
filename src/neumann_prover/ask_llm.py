@@ -1,48 +1,37 @@
+"""Public entry point for invoking language models.
 
-'''
-src/neumann_prover/ask_llm.py
+`ask_llm` resolves a model (explicit id, stage default, or the cheap fallback),
+infers the provider, and delegates to the matching adapter.
+"""
+from __future__ import annotations
 
-This module is the public entry point for invoking language models. It selects a model by explicit identifier or by stage default, infers the provider, and delegates the call to the provider adapter.
-
-Functions:
-
-ask_llm(text: str, *, stage: str | None = None, model: str | None = None, temperature: float = 0.2) -> str
-Input: a prompt, optional stage or explicit model identifier, and temperature. Output: model response as plain text.
-
-_ask_together_provider_for(model: str) -> str
-Input: a model identifier. Output: provider name inferred from the identifier (compatibility alias).
-'''
-
-import os
 from typing import Optional
-from .stages import list_stages, default_model_for, STAGE_DEFAULTS, VALID_STAGES, OPENAI_CHEAP
+
+from .stages import STAGE_DEFAULTS, OPENAI_CHEAP
 from .providers import _ask_openai, _ask_anthropic, _ask_together, _provider_for
+
 
 def ask_llm(
     text: str,
     *,
     stage: Optional[str] = None,
     model: Optional[str] = None,
-    temperature: float = 1,
+    temperature: Optional[float] = None,
 ) -> str:
-    """
-    Use a stage default or explicit model to generate output.
-    Stages:
-      informal_proof
-      formal_statement_draft
-      formal_proof_draft
-      formal_statement_correction
-      formal_proof_correction
-    """
-    if model is None:
-        if stage is None:
-            target = OPENAI_CHEAP
-        else:
-            if stage not in STAGE_DEFAULTS:
-                raise ValueError(f"Unknown stage '{stage}'. Valid: {VALID_STAGES}")
-            target = STAGE_DEFAULTS[stage]
-    else:
+    """Generate text with an explicit `model`, a `stage` default, or the cheap
+    fallback. `temperature` is only forwarded to models that accept it (see
+    providers._accepts_temperature); leave it None for gpt-5 / Opus 4.7+."""
+    if model is not None:
         target = model
+    elif stage is not None:
+        try:
+            target = STAGE_DEFAULTS[stage]
+        except KeyError:
+            raise ValueError(
+                f"Unknown stage '{stage}'. Valid: {tuple(STAGE_DEFAULTS)}"
+            ) from None
+    else:
+        target = OPENAI_CHEAP
 
     provider = _provider_for(target)
     if provider == "openai":
