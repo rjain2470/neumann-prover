@@ -1,150 +1,103 @@
-'''
-src/neumann_prover/correction.py
+"""Error-correction and retry loops.
 
-This module owns all error-correction and retry logic so it can be replaced independently in a future version. It fixes statements and proofs and, when requested, iterates until compilation succeeds or a limit is reached.
-
-Functions:
-
-formal_statement_corrector(code: str, model: str | None = None) -> str
-Input: a formal statement or diagnostic bundle, optional model id. Output: corrected statement text.
-
-formal_proof_corrector(code: str, model: str | None = None) -> str
-Input: a formal proof or diagnostic bundle, optional model id. Output: corrected proof text.
-
-formal_statement_until_compiles(spec: str, model: str | None = None, max_iters: int = 3) -> str
-Input: a specification, optional model id, and iteration cap. Output: the best compiling statement (or last attempt).
-
-try_formal_proof_until_compiles(spec: str, model: str | None = None, max_iters: int = 3) -> str
-Input: a specification, optional model id, and iteration cap. Output: the best compiling proof (or last attempt).
-'''
-
+Isolated here so it can be swapped independently. Both loops now judge success
+with `verify_lean` (sound: no sorry/native_decide, whitelisted axioms), not a
+bare exit code.
+"""
 from __future__ import annotations
-from typing import Optional, Dict, List
+
+from typing import Optional
+
 from .ask_llm import ask_llm
-from .utils import extract_lean_code, ensure_import_mathlib, compile_lean_snippet
+from .stages import default_model_for
+from .utils import extract_lean_code, ensure_import_mathlib, verify_lean, LeanResult
 from .pipelines.formal_proof import formal_proof_generator
 from .pipelines.formal_statement import formal_statement_generator
+
 
 def formal_statement_corrector(
     prev_lean_code: str,
     error: str,
     *,
-    restated: str | None = None,
-    model: str = "gpt-5-mini",
+    restated: Optional[str] = None,
+    model: Optional[str] = None,
 ) -> str:
-    """
-    Ask GPT to correct a *failing* Lean 4 file that is supposed to only STATE a theorem
-    (body is `by\n  sorry`). It preserves intent, keeps `import Mathlib`, the `Demo` namespace.
-    Returns a *full* Lean file as text.
-    """
+    """Repair a failing Lean 4 file that should only *state* a theorem (body is
+    `by\\n  sorry`), preserving intent. Returns the extracted Lean code."""
+    model = model or default_model_for("formal_statement_correction")
     intent = (
         restated.strip()
         if restated
-        else "Use the same mathematical content as in the previous attempt; do not change the meaning."
+        else "Use the same mathematical content as before; do not change the meaning."
     )
-
     prompt = (
         "You are a mathematician and computer scientist. The Lean 4 file below fails to compile.\n"
-        "Correct it so that it compiles and *only states* the theorem (the proof body remains `by\\n  sorry`).\n"
-        "Keep the intended meaning exactly, but fix missing typeclass assumptions, universes, variables, etc.\n"
-        "Rules:\n"
-        "• Start with `import Mathlib`.\n"
-        "• Use `namespace Demo` … `end Demo`.\n"
-        "• The body should end with `:= by\\n  sorry` (no other placeholders).\n"
-        "• Do not add extraneous commentary; return ONLY a single ```lean4 fenced block containing the full file.\n\n"
+        "Correct it so it compiles and *only states* the theorem (the body stays `by\\n  sorry`).\n"
+        "Keep the intended meaning exactly; fix missing typeclass assumptions, universes, variables, etc.\n"
+        "Rules: start with `import Mathlib`; wrap in `namespace Demo` ... `end Demo`; body ends with "
+        "`:= by\\n  sorry`; return ONLY a single ```lean4 fenced block with the full file.\n\n"
         f"Intended statement (precise English):\n{intent}\n\n"
         "Current Lean file (fails to compile):\n```lean4\n"
-        f"{prev_lean_code.strip()}\n"
-        "```\n\n"
+        f"{prev_lean_code.strip()}\n```\n\n"
         "Compiler output:\n```\n"
-        f"{(error or '').strip()}\n"
-        "```\n"
+        f"{(error or '').strip()}\n```\n"
         "Return the corrected Lean file now."
     )
+    return extract_lean_code(ask_llm(prompt, model=model))
 
-    gpt_raw = ask_llm(prompt, model=model)
-    return extract_lean_code(gpt_raw)
 
 def formal_statement_until_compiles(
     statement: str,
-    model: str | None = None,
+    model: Optional[str] = None,
     max_iters: int = 3,
-    project_root: str = None,
-    filename: str = "Main.lean",
+    project_root: Optional[str] = None,
 ) -> str:
-    """
-    Try up to max_iters times. On the first compilation success, return immediately.
-    If none succeed, return the last attempted code.
-    """
-
-    if not project_root:
-        import os, pathlib
-        project_root = os.environ.get("NEUMANN_LEAN_PROJECT", str(pathlib.Path.cwd() / "lean_project"))
-    
-    last_code: str = ""
-    last_error: str | None = None
+    """Generate, then correct-until-it-compiles. Returns the first compiling
+    statement, else the last attempt."""
+    last_code = ""
+    last_error: Optional[str] = None
 
     for i in range(1, max_iters + 1):
         print(f"\n=== Attempt {i}/{max_iters} (Formal Statement) ===")
-
         if i == 1:
-            raw = formal_statement_generator(statement, model=model, project_root=project_root)
-            code = extract_lean_code(raw) or str(raw)
+            code = formal_statement_generator(statement, model=model)
+        elif last_code and last_error is not None:
+            code = formal_statement_corrector(
+                last_code, error=last_error, restated=statement, model=model
+            )
         else:
-            if not last_code or last_error is None:
-                print("Correction requires previous code and error. Stopping.")
-                break
-
-            corrected = formal_statement_corrector(
-                last_code,
-                error=last_error,
-                restated=statement,
-                model=model,
-              )
-            code = extract_lean_code(corrected) or str(corrected)
+            print("Correction requires previous code and error. Stopping.")
+            break
 
         code = ensure_import_mathlib(code)
-        ok, out, err = compile_lean_snippet(
-            code
-        )
         last_code = code
-
-        if ok:
-            print("File successfully compiled!")
+        res = verify_lean(code, expect="statement", project_root=project_root)
+        if res.ok:
+            print("Statement compiled.")
             return code
+        print(f"Statement not accepted ({res.reason}); attempting correction.")
+        last_error = res.stderr or res.stdout or res.reason
 
-        else:
-          print("Compile failed; attempting correction.")
-          last_error = err
-
-    print(f"\n=== Failed to compile formal statement after {max_iters} attempts. Returning last attempt. ===")
+    print(f"\n=== No compiling statement after {max_iters} attempts; returning last. ===")
     return last_code
 
 
 def try_formal_proof_until_compiles(
-    informal_statement: str | None = None,
-    informal_proof: str | None = None,
-    pseudocode: str | None = None,
-    formal_statement: str | None = None,
+    informal_statement: Optional[str] = None,
+    informal_proof: Optional[str] = None,
+    pseudocode: Optional[str] = None,
+    formal_statement: Optional[str] = None,
     *,
-    model: str | None = None,
-    max_iters: int = 4,          
-    project_root: str | None = None,
-    filename: str = "Main.lean",
-) -> Dict[str, object]:
-    """
-    Attempt to synthesize a complete Lean proof up to max_iters times.
-    On each failure, feed compiler stderr back into the next prompt.
-    Returns: {"success": bool, "final_code": str, "attempts": [ {...} , ...] }
-    """
-
-    if not project_root:
-        import os, pathlib
-        project_root = os.environ.get("NEUMANN_LEAN_PROJECT", str(pathlib.Path.cwd() / "lean_project"))
-    
-    attempts: List[Dict[str, str]] = []
-    last_error: str | None = None
-    final_code: str = ""
+    model: Optional[str] = None,
+    max_iters: int = 4,
+    project_root: Optional[str] = None,
+) -> dict:
+    """Synthesize a Lean proof, feeding compiler errors back each round. Success
+    requires a *sound* proof (verify_lean). Returns
+    {"success", "final_code", "attempts"}."""
+    attempts: list[dict] = []
+    last_error: Optional[str] = None
+    final_code = ""
     success = False
 
     for i in range(1, max_iters + 1):
@@ -157,36 +110,25 @@ def try_formal_proof_until_compiles(
             model=model,
             error=last_error,
         )
-        code = gen.get("lean_code", "") if isinstance(gen, dict) else str(gen)
-        code = ensure_import_mathlib(extract_lean_code(code) or code)
+        code = ensure_import_mathlib(gen["lean_code"])
+        res: LeanResult = verify_lean(code, expect="proof", project_root=project_root)
 
-        # Compile
-        ok, out, err = compile_lean_snippet(
-            code
-        )
-
-        # Log this round
         attempts.append({
             "attempt": str(i),
-            "gpt_raw": gen.get("gpt_raw", "") if isinstance(gen, dict) else "",
+            "gpt_raw": gen.get("gpt_raw", ""),
             "lean_code": code,
-            "stdout": (out or "").strip(),
-            "stderr": (err or "").strip(),
-            "ok": str(bool(ok)),
+            "stdout": res.stdout,
+            "stderr": res.stderr,
+            "ok": str(res.ok),
+            "reason": res.reason,
         })
 
-        if ok:
-            print("File successfully compiled!")
+        if res.ok:
+            print("Proof verified (compiles, no sorry, whitelisted axioms).")
             final_code = code
             success = True
             break
+        print(f"Proof not accepted ({res.reason}); feeding error into next attempt.")
+        last_error = res.stderr or res.stdout or res.reason
 
-        else:
-          print("Compile failed; feeding error back into the next attempt.")
-          last_error = err or ""
-
-    return {
-        "success": success,
-        "final_code": final_code,
-        "attempts": attempts,
-    }
+    return {"success": success, "final_code": final_code, "attempts": attempts}

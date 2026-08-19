@@ -4,20 +4,23 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neumann-prover"
-version = "0.1.0"
-description = "End-to-end autoformalization of math proofs using general-purpose LLMs and Lean."
+version = "0.2.0"
+description = "End-to-end autoformalization of math proofs using general-purpose LLMs and Lean, with sound (reward-hacking-resistant) proof verification."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
   { name = "Ritik Jain" }
 ]
 dependencies = [
   "openai>=1.0.0",
-  "anthropic>=0.30.0",
+  "anthropic>=0.40.0",
   "together>=0.2.0",
   "tqdm>=4.66.0"
 ]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
 
 [project.scripts]
 neumann-prover = "neumann_prover.pipelines.batch:cli_main"
