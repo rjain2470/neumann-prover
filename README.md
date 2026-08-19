@@ -16,9 +16,9 @@ The following diagram summarizes neumann-prover's workflow.
 
 - **Text-to-Proof Automation**: Generate informal proofs, formal statements, and Lean-4 pseudocode from natural language inputs.
 - **Formal Statement Verification**: Translate informal mathematical theorem statement into Lean4 code.
-- **Sound proof verification**: A proof counts as solved only if it compiles *and* passes a soundness check — no `sorry`, `admit`, or `native_decide`, and only whitelisted axioms (`propext`, `Classical.choice`, `Quot.sound`). This blocks the common reward-hacking failure where a "proof" exits the compiler cleanly but is vacuous.
+- **Sound proof verification**: A proof counts as solved only if it compiles *and* passes a soundness check.
 - **Integration with Lean Theorem Prover**: Ensures compatibility with Lean and Mathlib.
-- **Multi-Model Support**: Seamlessly utilize OpenAI, Anthropic, and Together APIs. Defaults are current-best (OpenAI gpt-5 family; Claude Opus 4.8 / Sonnet 4.6). `temperature` is only sent to models that accept it.
+- **Multi-Model Support**: Seamlessly utilize OpenAI, Anthropic, and Together APIs. 
 
 ## Repository Structure 📂
 
